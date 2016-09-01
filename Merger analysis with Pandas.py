@@ -31,11 +31,14 @@ df_tables = df_tables[df_tables['name'].str.contains('Node') == True]
 
 dates = [i.replace('Node','') for i in df_tables['name']]
 
-many_dfs = []
-for nodeTable in [i for i in df_tables['name']]:
-    edgeTable = nodeTable.replace('Node','Eset')
-    many_dfs.append([pd.read_sql_query('SELECT * FROM %s' % nodeTable,E2016),pd.read_sql_query('SELECT * FROM %s' % edgeTable,E2016)])
-    print('%s: %s, %s' % (nodeTable,len(many_dfs[-1][0]),len(many_dfs[-1][1])))
+
+def load_everything_just_because():
+    many_dfs = []
+    for nodeTable in [i for i in df_tables['name']]:
+        edgeTable = nodeTable.replace('Node','Eset')
+        many_dfs.append([pd.read_sql_query('SELECT * FROM %s' % nodeTable,E2016),pd.read_sql_query('SELECT * FROM %s' % edgeTable,E2016)])
+        print('%s: %s, %s' % (nodeTable,len(many_dfs[-1][0]),len(many_dfs[-1][1])))
+    return many_dfs
 
 
 
