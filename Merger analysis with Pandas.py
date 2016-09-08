@@ -91,24 +91,41 @@ def follow_Id(Id = '5428161003960189953',connection = Connery2016):
 def follow_Id_EdgeVersion(Id = '5428161003960189953',connection = Connery2016):
     Id_data = []
     dates = give_names(connection)
-    print(dates[0])
-    firstFact = pd.read_sql_query('SELECT * FROM %s WHERE Id = %s' % (dates[0]+'Node',Id),connection)
-    for tab in dates[1:]:
-        facts = pd.read_sql_query('SELECT * FROM %s WHERE Id = %s' % (tab+'Node',Id),connection)
-        facts = pd.concat((firstFact,facts),axis = 0)
+
+
+##    firstfl = pd.read_sql_query('SELECT * FROM %s WHERE Source = %s OR Target = %s' % (dates[0]+'Eset',Id,Id),connection)
+##    ## Get rid of the needless repitition of Id and make all edges go one direction.
+##    firstfl.Source[firstfl.Source == Id] = firstfl.Target
+##    firstfl.Target = Id
+##    firstfl = firstfl.loc[:,['Source','Status']]
+##
+##    ## Rename the columns so we can append them together into one dataframe if we want.
+##
+##    firstfl.columns = [dates[0][-8:]+'friends','Status']
+##
+##    Id_data.append(firstfl)
+    for tab in dates:
+
         
         fl = pd.read_sql_query('SELECT * FROM %s WHERE Source = %s OR Target = %s' % (tab+'Eset',Id,Id),connection)
-
-        print(fl.loc[:,[Source,Status]][fl.Target == Id])
-        print(fl.loc[:,[Target,Status]][fl.Source == Id])
         
-        
+        ## Get rid of the needless repitition of Id and make all edges go one direction.
+        fl.Source[fl.Source == Id] = fl.Target
+        fl.Target = Id
+        fl = fl.loc[:,['Source','Status']]
+        fl2 = fl.drop_duplicates(['Source'], keep='last')
 
-            
-        
-        Id_data.append(pd.concat((facts,friends),axis = 1))
+        print('%s: %s %s' % (tab[-8:],len(fl),len(fl2)))
 
+        ## Rename the columns so we can append them together into one dataframe if we want.
 
+        fl2.columns = [tab[-8:]+'friends','Status']
+##        fl = pd.concat((fl,firstfl))
+##        firstfl = fl
+##        print(fl)
+        Id_data.append(fl2)
+     
+    return Id_data
 
 
 
