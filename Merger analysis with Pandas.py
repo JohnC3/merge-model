@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import sqlite3
 import os
+import sklearn.cluster as cl
 from sqlalchemy import create_engine # database connection
 
 
@@ -31,11 +32,18 @@ df_tables = df_tables[df_tables['name'].str.contains('Node') == True]
 
 dates = [i.replace('Node','') for i in df_tables['name']]
 
-many_dfs = []
-for nodeTable in [i for i in df_tables['name']]:
-    edgeTable = nodeTable.replace('Node','Eset')
-    many_dfs.append([pd.read_sql_query('SELECT * FROM %s' % nodeTable,E2016),pd.read_sql_query('SELECT * FROM %s' % edgeTable,E2016)])
-    print('%s: %s, %s' % (nodeTable,len(many_dfs[-1][0]),len(many_dfs[-1][1])))
+
+## I decided to test if I could load everything into memory useing pandas. Yes.
+def load_all_node_data():
+    many_dfs = []
+    for nodeTable in [i for i in df_tables['name']]:
+        edgeTable = nodeTable.replace('Node','Eset')
+        many_dfs.append([pd.read_sql_query('SELECT * FROM %s' % nodeTable,E2016),pd.read_sql_query('SELECT * FROM %s' % edgeTable,E2016)])
+        print('%s: %s, %s' % (nodeTable,len(many_dfs[-1][0]),len(many_dfs[-1][1])))
+    return many_dfs
+
+
+
 
 
 
