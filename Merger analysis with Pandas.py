@@ -26,24 +26,6 @@ C2 = create_engine('sqlite:///'+p+'Connery.db')
 E2016 = create_engine('sqlite:///E:\\Dropbox\\PS2Research\\2016Data\\Emerald.db')
 
 
-<<<<<<< HEAD
-=======
-df_tables = pd.read_sql_query('SELECT name FROM sqlite_master WHERE (type == "table")',E2016)
-
-df_tables = df_tables[df_tables['name'].str.contains('Node') == True]
-
-dates = [i.replace('Node','') for i in df_tables['name']]
-
-
-def load_everything_just_because():
-    many_dfs = []
-    for nodeTable in [i for i in df_tables['name']]:
-        edgeTable = nodeTable.replace('Node','Eset')
-        many_dfs.append([pd.read_sql_query('SELECT * FROM %s' % nodeTable,E2016),pd.read_sql_query('SELECT * FROM %s' % edgeTable,E2016)])
-        print('%s: %s, %s' % (nodeTable,len(many_dfs[-1][0]),len(many_dfs[-1][1])))
-    return many_dfs
-
->>>>>>> master
 
 ## Returns the table names from a connection in order.
 def give_names(connection):
@@ -126,6 +108,4 @@ def follow_Id_EdgeVersion(Id = '5428161003960189953',connection = Connery2016):
         Id_data.append(fl2)
      
     return Id_data
-
-
 
