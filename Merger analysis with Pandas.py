@@ -31,9 +31,17 @@ E2016 = create_engine('sqlite:///E:\\Dropbox\\PS2Research\\2016Data\\Emerald.db'
 def give_names(connection):
     df_tables = pd.read_sql_query('SELECT name FROM sqlite_master WHERE (type == "table")',connection)
 
-    df_tables = df_tables[df_tables['name'].str.contains('Node') == True]
+    if 'date_names' in df_tables['name'].values:
+        dates = pd.read_sql_query('SELECT date FROM date_names',connection)['date']
 
-    dates = [i.replace('Node','') for i in df_tables['name']]
+        dates = [i for i in dates]
+         
+
+    else:
+
+        df_tables = df_tables[df_tables['name'].str.contains('Node') == True]
+
+        dates = [i.replace('Node','') for i in df_tables['name']]
 
     return dates
 
@@ -88,8 +96,11 @@ def follow_Id_EdgeVersion(Id = '5428161003960189953',connection = Connery2016):
 ##    Id_data.append(firstfl)
     for tab in dates:
 
-        
-        fl = pd.read_sql_query('SELECT * FROM %s WHERE Source = %s OR Target = %s' % (tab+'Eset',Id,Id),connection)
+        ## Try Eset and e since its different depending on database ...
+        try:
+            fl = pd.read_sql_query('SELECT * FROM %s WHERE Source = %s OR Target = %s' % (tab+'Eset',Id,Id),connection)
+        except:
+            fl = pd.read_sql_query('SELECT * FROM %s WHERE Source = %s OR Target = %s' % (tab+'e',Id,Id),connection)
         
         ## Get rid of the needless repitition of Id and make all edges go one direction.
         fl.Source[fl.Source == Id] = fl.Target
