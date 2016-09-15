@@ -62,8 +62,30 @@ def initial_state(faction = '1'):
         G = nx.Graph(G.subgraph(keep))
     return G
 
+def run_assortivity(faction = '1',interval = 1000,repititions = 10,m = 6):
+    folder = 'inteval = %s repititions = %s, method is naive BA m = %s' %(interval,repititions,m)
+    directory = 'C:\\Users\\jscle\\Desktop\\itteration\\'+folder
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    else:
+        directory = directory + '(1)'
+        os.makedirs(directory)
 
-G = initial_state()
+    G = initial_state(faction)
+    i = 0
+    assor = [nx.assortativity.attribute_assortativity_coefficient(G,'origin')]
+    while(i < repititions):
+        nx.write_graphml(G,directory+'\\BA model %s with N = %s and m = %s.graphml' % (i,len(G.nodes()),m))
+        i = i+1
+        G = BA_evoloution(G,len(G.nodes())+ interval,m,i)
+        
+        assor.append(nx.assortativity.attribute_assortativity_coefficient(G,'origin'))
+    with open(directory+'\\assortivity.txt','a') as f:
+        for A in assor:
+            f.write('%s \n'%A)
+            
+    return assor
 
-G2 = BA_evoloution(G,len(G.nodes())+ 1000,5,1111)
 
+
+x = run_assortivity()
