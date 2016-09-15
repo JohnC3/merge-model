@@ -94,6 +94,12 @@ def run_assortivity(faction = '1',interval = 1000,repititions = 10,m = 6):
                 
     return assor
 
+## compaire changing m values to see what happens.
+def run_naive_batch():
+    print(run_assortivity('1',1000,30,2))
+    print(run_assortivity('1',1000,30,3))
+    print(run_assortivity('1',1000,30,4))
+    print(run_assortivity('1',1000,30,5))
+    print(run_assortivity('1',1000,30,6))
 
 
-x = run_assortivity()
