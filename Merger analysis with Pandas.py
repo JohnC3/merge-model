@@ -3,6 +3,7 @@ import numpy as np
 import sqlite3
 import os
 import sklearn.cluster as cl
+import sklearn.decomposition as de
 from sqlalchemy import create_engine # database connection
 
 
