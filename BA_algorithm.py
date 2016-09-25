@@ -6,9 +6,6 @@ import matplotlib.pyplot as plt
 
 
 def BA_evoloution(G, n, m, seed=None):
-
-
-
     """Return random graph using Barabási-Albert preferential attachment model.
         
     A graph of n nodes is grown by attaching new nodes each with m
@@ -72,6 +69,44 @@ def BA_evoloution(G, n, m, seed=None):
         source += 1
     return G
 
+
+def BA_evoloution_With_removal(G, n, m, r, seed=None):
+    """Same as before except this time remove r nodes
+    """
+        
+    if m < 1 or  m >=n:
+        raise nx.NetworkXError(
+              "Barabási-Albert network must have m>=1 and m<n, m=%d,n=%d"%(m,n))
+    if seed is not None:
+        random.seed(seed)    
+    
+    # List of existing nodes, with nodes repeated once for each adjacent edge 
+    repeated_nodes=list(set([i for i,j in G.edges()])) + list(set([j for i,j in G.edges()]))
+
+    # Target nodes for new edges
+    targets = random.sample(repeated_nodes,m)
+    # Start adding the other n-m nodes. The first node is m.
+    source=len(G.nodes())
+    print('BA model with N = '+str(n)+' and m = '+str(m))
+    while source<n:
+        # Add edges to m nodes from the source.
+        G.add_edges_from(zip([source]*m,targets))
+        # Add new to origin
+        G.node[source]['origin'] = 'N'      
+        # Add one node to the list for each new edge just created.
+        repeated_nodes.extend(targets)
+        # And the new node "source" has m edges to add to the list.
+        repeated_nodes.extend([source]*m) 
+        # Now choose m unique nodes from the existing nodes 
+        # Pick uniformly from repeated_nodes (preferential attachement) 
+        targets = random.sample(repeated_nodes,m)
+        source += 1
+
+    # Remove r nodes before returning
+    removal = random.sample(G.nodes(),1000)
+    G.remove_nodes_from(removal)
+    
+    return G
 
 
 
