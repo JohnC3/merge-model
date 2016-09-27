@@ -101,12 +101,11 @@ def run_assortivity_model_2(faction = '1',interval = 1000,repititions = 10,m = 6
     directory = 'C:\\Users\\jscle\\Desktop\\itteration\\'+folder
 
 
-    
+    while(os.path.exists(directory)):
+        directory = directory + '(1)'
     if not os.path.exists(directory):
         os.makedirs(directory)
-    else:
-        directory = directory + '(1)'
-        os.makedirs(directory)
+
 
     ## Open a file to record assortivity in
     f = open(directory+'\\assortivity.txt','a')
@@ -114,13 +113,13 @@ def run_assortivity_model_2(faction = '1',interval = 1000,repititions = 10,m = 6
     G = initial_state(faction)
 
     N = len(G.nodes())
-    
+    iterSymbol = 'abcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()-_=+'
     i = 0
     assor = [nx.assortativity.attribute_assortativity_coefficient(G,'origin')]
     while(i < repititions):
         nx.write_graphml(G,directory+'\\BA model %s with N = %s and m = %s.graphml' % (i,len(G.nodes()),m))
         i = i+1
-        G = BA_evoloution_With_removal(G,N + (interval-remove)*i + 1000, m,remove,seed = i)
+        G = BA_evoloution_With_removal(G,N + 1000, m,remove,seed = i,iteration_symbol = iterSymbol[i])
 
         A = nx.assortativity.attribute_assortativity_coefficient(G,'origin')
         assor.append(A)
@@ -140,10 +139,10 @@ def run_naive_batch():
 
 ## compaire changing m values to see what happens.
 def run_naive_batch_2():
-    print(run_assortivity_model_2('1',1000,30,2,1000))
-    print(run_assortivity_model_2('1',1000,30,3,1000))
-    print(run_assortivity_model_2('1',1000,30,4,1000))
-    print(run_assortivity_model_2('1',1000,30,5,1000))
-    print(run_assortivity_model_2('1',1000,30,6,1000))
+    print(run_assortivity_model_2(m = 2,repititions = 30))
+    print(run_assortivity_model_2(m = 3,repititions = 30))
+    print(run_assortivity_model_2(m = 4,repititions = 30))
+    print(run_assortivity_model_2(m = 5,repititions = 30))
+    print(run_assortivity_model_2(m = 6,repititions = 30))
 
 run_naive_batch_2()

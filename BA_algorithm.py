@@ -70,7 +70,8 @@ def BA_evoloution(G, n, m, seed=None):
     return G
 
 
-def BA_evoloution_With_removal(G, n, m, r, seed=None):
+def BA_evoloution_With_removal(G, n, m, r, seed=None,iteration_symbol = 'a'):
+    print(n)
     """Same as before except this time remove r nodes
     """
         
@@ -89,22 +90,29 @@ def BA_evoloution_With_removal(G, n, m, r, seed=None):
     source=len(G.nodes())
     print('BA model with N = '+str(n)+' and m = '+str(m))
     while source<n:
+        # Node name depends on iteration symbol
+        nodeName = '%s%s' %(iteration_symbol,source)
+        
         # Add edges to m nodes from the source.
-        G.add_edges_from(zip([source]*m,targets))
+        G.add_edges_from(zip([nodeName]*m,targets))
         # Add new to origin
-        G.node[source]['origin'] = 'N'      
+        G.node[nodeName]['origin'] = 'N'      
         # Add one node to the list for each new edge just created.
         repeated_nodes.extend(targets)
         # And the new node "source" has m edges to add to the list.
-        repeated_nodes.extend([source]*m) 
+        repeated_nodes.extend([nodeName]*m) 
         # Now choose m unique nodes from the existing nodes 
         # Pick uniformly from repeated_nodes (preferential attachement) 
         targets = random.sample(repeated_nodes,m)
         source += 1
 
+    
+
     # Remove r nodes before returning
-    removal = random.sample(G.nodes(),1000)
+    removal = random.sample(G.nodes(),r)
+    print(len(G.nodes()))
     G.remove_nodes_from(removal)
+    print(len(G.nodes()))
     
     return G
 
