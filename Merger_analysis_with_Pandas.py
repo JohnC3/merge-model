@@ -3,7 +3,6 @@ import numpy as np
 import sqlite3
 import os
 import sklearn.cluster as cl
-import sklearn.decomposition as de
 from sqlalchemy import create_engine # database connection
 
 
@@ -25,6 +24,14 @@ Miller2016 = sqlite3.connect('E:\\Dropbox\\PS2Research\\2016Data\\Miller.db')
 C2 = create_engine('sqlite:///'+p+'Connery.db')
 
 E2016 = create_engine('sqlite:///E:\\Dropbox\\PS2Research\\2016Data\\Emerald.db')
+
+#Returns the first coloumn of a the given query on a givent database or connection as a list.
+def singleCol(conn,query):
+    return [i[0] for i in conn.execute(query).fetchall()]
+
+#Returns a list of lists of the results from a given query on the connection connn
+def multiCol(conn,query):
+    return [list(i) for i in conn.execute(query).fetchall()]
 
 ## Returns the table names from a connection in order.
 def give_names(connection):
