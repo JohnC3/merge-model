@@ -56,56 +56,67 @@ def makeGraphs():
 
     return graphs
 
-def getGraph(date,runtime=False):
-    try:
-        start_time = time.time()
-        G = nx.read_graphml('C:\\Users\\jscle\\merger analysis\\merge-model\\graphs\\%s.gramphml'% date)
-
-        if(runtime == True):
-            print("--- %0.4f seconds --- to load %s" % ((time.time() - start_time),date))
-        
-    except:
-        
-        mNodes,wNodes = build_list_of_MandW_nodes()
-        
-        print('building %s' % date)
-        start_time = time.time()
-        edges = pd.read_sql_query('SELECT Source,Target FROM %se' % date,EmeraldEngine)
-
+def getGraph(date,runtime=False,lite = False):
+    if lite:
+        if date in ['Apr2_16','Mar26_16']:
+            edges = pd.read_sql_query('SELECT Source,Target FROM %se where Status = "normal"' % date,EmeraldEngine)
+        else:
+            edges = pd.read_sql_query('SELECT Source,Target FROM %se' % date,EmeraldEngine)
         G = nx.from_pandas_dataframe(edges,'Source','Target')
 
-        ##Set each nodes faction to the value found in the database        
+    else:
+        try:
+            start_time = time.time()
+            G = nx.read_graphml('C:\\Users\\jscle\\merger analysis\\merge-model\\graphs\\%s.gramphml'% date)
 
-        faction = pd.read_sql_query('SELECT Id,Faction FROM %s' %date,EmeraldEngine)
+            if(runtime == True):
+                print("--- %0.4f seconds --- to load %s" % ((time.time() - start_time),date))
+            
+        except:
+            
+            mNodes,wNodes = build_list_of_MandW_nodes()
+            
+            print('building %s' % date)
+            start_time = time.time()
+            if date in ['Apr2_16','Mar26_16']:
+                edges = pd.read_sql_query('SELECT Source,Target FROM %se where Status = "normal"' % date,EmeraldEngine)
+            else:
+                edges = pd.read_sql_query('SELECT Source,Target FROM %se' % date,EmeraldEngine)
 
-        F = dict(zip(faction.Id,faction.faction))
+            G = nx.from_pandas_dataframe(edges,'Source','Target')
 
-        faction_errors = 0
-        for n in G.nodes():
-            try:
-                G.node[n]['faction'] = F[n]
-            except:
-                faction_errors += 1
-                G.node[n]['faction'] = 'Err'
-                
-        print('Faction errors %s' % faction_errors)
+            ##Set each nodes faction to the value found in the database        
 
-        ## Set each nodes origin based on the server it came from
+            faction = pd.read_sql_query('SELECT Id,Faction FROM %s' %date,EmeraldEngine)
+
+            F = dict(zip(faction.Id,faction.faction))
+
+            faction_errors = 0
+            for n in G.nodes():
+                try:
+                    G.node[n]['faction'] = F[n]
+                except:
+                    faction_errors += 1
+                    G.node[n]['faction'] = 'Err'
                     
-        nx.set_node_attributes(G,'WorM','N')
-        
-        for n in mNodes:
-            if n in G:
-                G.node[n]['WorM'] = 'M'
-        for n in wNodes:
-            if n in G:
-                G.node[n]['WorM'] = 'W'
+            print('Faction errors %s' % faction_errors)
 
-        for n in G.nodes():
-            G.node[n]['origin'] = G.node[n]['WorM'] + G.node[n]['faction']
+            ## Set each nodes origin based on the server it came from
+                        
+            nx.set_node_attributes(G,'WorM','N')
+            
+            for n in mNodes:
+                if n in G:
+                    G.node[n]['WorM'] = 'M'
+            for n in wNodes:
+                if n in G:
+                    G.node[n]['WorM'] = 'W'
 
-        nx.write_graphml(G,'C:\\Users\\jscle\\merger analysis\\merge-model\\graphs\\%s.gramphml'% date)
-        print("--- %s seconds --- to build" % (time.time() - start_time))
+            for n in G.nodes():
+                G.node[n]['origin'] = G.node[n]['WorM'] + G.node[n]['faction']
+
+            nx.write_graphml(G,'C:\\Users\\jscle\\merger analysis\\merge-model\\graphs\\%s.gramphml'% date)
+            print("--- %s seconds --- to build" % (time.time() - start_time))
     return G
 
 
@@ -178,7 +189,7 @@ def assortivity():
         
 
 
-from modularity.py import *
+from modularity import *
 
 ## 
 def look_modularity():
@@ -211,3 +222,107 @@ def look_modularity():
         print('%s 2014,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (name,All,O,NC,TR,VS,NC_O,TR_O,VS_O,len(noFaction)))
 
 
+## Explore the change in the node set over time first by finding the everyone who leaves and everyone who joins
+
+def node_dynamics():
+    L = getGraph(real[0])
+
+    ## Store all nodes removed so far.
+
+    removal_record = set()
+
+    ## Values for spreadsheet CP = current population, R = Leavers, PC = potentially cutoff
+    CP = len(list(set(L.nodes())))
+    R = 0
+    PC = 0
+    ## more values N = Joiners, B returned from inactivity'
+    N = 0
+    B = 0
+    
+    print('Date, Current population, Leavers, potentially cutoff, Joiners, returned from inactivity')
+
+    print('%s,%s,%s,%s,%s,%s' % (real[0],CP,R,PC,N,B))
+   
+    for name in real[1:]:
+     
+        G = getGraph(name,lite=True);
+
+        L_ids = set(L.nodes())
+
+        G_ids = set(G.nodes())
+
+        CP = len(G_ids)
+
+        ## The symetric difference returns all Ids in G but not in L and all Ids in L but not in G
+        difference = L_ids.symmetric_difference(G_ids)
+
+        ## 
+
+        removed = difference.intersection(L_ids)
+
+        added = difference.intersection(G_ids)
+
+        R = len(removed)
+
+        ## to look at PC we need to examine every removed node and check if they are
+        ## removed because they quit or removed because they have no neighbours left
+        ## If any neighbour in the current graph still exists they don't get set as PC
+
+        PC = 0
+      
+        for n in removed:
+            ## cutoff_flag starts true but returns False if it is in fact cut off.
+
+            cutoff_flag = True
+            
+            neig = set(L[n].keys())
+
+            for node in neig:
+                if node in G_ids:
+                    cutoff_flag = False
+                    break
+
+            if cutoff_flag:
+                PC+=1
+                       
+        N = len(added)
+
+        B = len(added.intersection(removal_record))
+
+        ## Update the removal record with all removed nodes.
+        removal_record = removal_record.union(removed)
+
+        ## Print the results.
+        print('%s,%s,%s,%s,%s,%s' % (name,CP,R,PC,N,B))
+
+        ## Set the new L to be G so the process can continue
+        
+        L = G
+
+## Get new dead and new_dead
+
+def other_node_dynamics():
+
+    print('Date,new,dead,new_dead')
+
+    new = 0
+    dead = 0
+    new_dead = 0
+
+    print('%s,%s,%s,%s' %(real[0],new,dead,new_dead))
+    
+    for name in real[1:]:
+        try:
+            new = len(set([i for i in pd.read_sql_query('SELECT Id FROM %s where status3 = "new"' % name,EmeraldEngine).Id]))
+            
+            dead = len(set([i for i in pd.read_sql_query('SELECT Id FROM %s where status3 = "dead" ' % name,EmeraldEngine).Id]))
+
+            new_dead = len(set([i for i in pd.read_sql_query('SELECT Id FROM %s where status3 = "new_dead" ' % name,EmeraldEngine).Id]))
+
+            
+        except:
+            new,dead,new_dead = 0,0,0
+
+        print('%s,%s,%s,%s' %(name,new,dead,new_dead))
+        
+other_node_dynamics()
